@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+.canvas-container {
+  height: 400px;
+  width: 100%;
+}
+
+.preview-container {
+  max-width: 100%;
+  text-align: center;
+}
