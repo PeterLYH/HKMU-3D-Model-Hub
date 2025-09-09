@@ -20,25 +20,8 @@ function Register() {
     e.preventDefault();
     try {
       await axios.post('http://localhost:5000/api/register', formData);
-      if (icon) {
-        const loginResponse = await axios.post('http://localhost:5000/api/login', {
-          identifier: formData.username,
-          password: formData.password,
-        });
-        localStorage.setItem('token', loginResponse.data.token);
-        localStorage.setItem('userId', loginResponse.data.user.id);
-        localStorage.setItem('nickname', loginResponse.data.user.nickname);
-        localStorage.setItem('icon', loginResponse.data.user.icon);
-        const formDataIcon = new FormData();
-        formDataIcon.append('icon', icon);
-        await axios.post('http://localhost:5000/api/profile', formDataIcon, {
-          headers: {
-            Authorization: `Bearer ${loginResponse.data.token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      }
-      navigate('/');
+      setError('');
+      navigate('/login');
     } catch (error) {
       setError(error.response?.data?.error || 'Registration failed');
       console.error('Register error:', error.response?.data);
@@ -48,7 +31,7 @@ function Register() {
   return (
     <div className="min-h-screen bg-gray-100 py-8 flex items-center justify-center">
       <div className="max-w-md w-full bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Register</h1>
+        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Register for HKMU 3D Model Hub</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
@@ -59,6 +42,7 @@ function Register() {
               value={formData.username}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              autoComplete="off"
               required
             />
           </div>
@@ -71,6 +55,7 @@ function Register() {
               value={formData.email}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              autoComplete="off"
               required
             />
           </div>
@@ -83,11 +68,12 @@ function Register() {
               value={formData.password}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              autoComplete="new-password"
               required
             />
           </div>
           <div>
-            <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">Nickname</label>
+            <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">Nickname (Optional)</label>
             <input
               type="text"
               id="nickname"
@@ -99,11 +85,11 @@ function Register() {
             />
           </div>
           <div>
-            <label htmlFor="icon" className="block text-sm font-medium text-gray-700">Profile Icon</label>
+            <label htmlFor="icon" className="block text-sm font-medium text-gray-700">Profile Icon (Optional)</label>
             <input
               type="file"
               id="icon"
-              accept="image/png,image/jpeg"
+              accept="image/png,image/jpeg,image/jpg"
               onChange={handleIconChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
             />

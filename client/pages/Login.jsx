@@ -1,26 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Login() {
-  const [formData, setFormData] = useState({ identifier: '', password: '' });
+  const [formData, setFormData] = useState({
+    identifier: localStorage.getItem('rememberedIdentifier') || '',
+    password: localStorage.getItem('rememberedPassword') || '',
+    rememberMe: false,
+  });
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const rememberedIdentifier = localStorage.getItem('rememberedIdentifier');
+    const rememberedPassword = localStorage.getItem('rememberedPassword');
+    if (rememberedIdentifier && rememberedPassword) {
+      setFormData((prev) => ({ ...prev, rememberMe: true }));
+    }
+  }, []);
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/api/login', formData);
+      const response = await axios.post('http://localhost:5000/api/login', {
+        identifier: formData.identifier,
+        password: formData.password,
+      });
       console.log('Login response:', response.data);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('userId', response.data.user.id);
-      localStorage.setItem('nickname', response.data.user.nickname);
-      localStorage.setItem('icon', response.data.user.icon);
-      navigate('/');
+      localStorage.setItem('username', response.data.user.username);
+      localStorage.setItem('nickname', response.data.user.nickname || '');
+      localStorage.setItem('icon', response.data.user.icon || '');
+      if (formData.rememberMe) {
+        localStorage.setItem('rememberedIdentifier', formData.identifier);
+        localStorage.setItem('rememberedPassword', formData.password);
+      } else {
+        localStorage.removeItem('rememberedIdentifier');
+        localStorage.removeItem('rememberedPassword');
+      }
+      window.dispatchEvent(new Event('loginUpdate'));
+      navigate('/browser');
     } catch (error) {
       setError(error.response?.data?.error || 'Login failed');
       console.error('Login error:', error.response?.data);
@@ -41,6 +66,7 @@ function Login() {
               value={formData.identifier}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              autoComplete={formData.rememberMe ? 'on' : 'off'}
               required
             />
           </div>
@@ -53,8 +79,20 @@ function Login() {
               value={formData.password}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              autoComplete={formData.rememberMe ? 'on' : 'new-password'}
               required
             />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              name="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">Remember Me</label>
           </div>
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">

@@ -14,11 +14,13 @@ const port = 5000;
 // Multer Configuration
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['model/gltf-binary', 'application/octet-stream', 'text/plain', 'image/png', 'image/jpeg'];
-  if (allowedTypes.includes(file.mimetype)) {
+  const allowedTypes = ['model/gltf-binary', 'application/octet-stream', 'text/plain', 'image/png', 'image/jpeg', 'model/vnd.fbx'];
+  const allowedExtensions = ['.glb', '.obj', '.mtl', '.png', '.jpg', '.jpeg', '.fbx'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only .glb, .obj, .mtl, .png, and .jpeg files are allowed.'), false);
+    cb(new Error('Invalid file type. Only .glb, .obj, .mtl, .png, .jpg, .jpeg, and .fbx files are allowed.'), false);
   }
 };
 const upload = multer({
@@ -47,9 +49,20 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, default: 'user', enum: ['user', 'admin'] },
   nickname: { type: String, default: '' },
-  icon: { type: String, default: '' }, // URL to icon in Supabase
+  icon: { type: String, default: '' },
 });
 const User = mongoose.model('User', userSchema);
+
+// Model Schema
+const modelSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String, default: '' },
+  fileType: { type: String, required: true, enum: ['obj', 'fbx', 'glb'] },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  filePath: { type: String, required: true },
+  previewPath: { type: String, required: true },
+});
+const Model = mongoose.model('Model', modelSchema);
 
 // Middleware to verify JWT
 const authenticateToken = (req, res, next) => {
@@ -67,7 +80,7 @@ app.post('/api/register', async (req, res) => {
   const { username, email, password, nickname } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, email, password: hashedPassword, nickname: nickname || username });
+    const user = new User({ username, email, password: hashedPassword, nickname: nickname || '' });
     await user.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
@@ -75,7 +88,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Login Route (username or email)
+// Login Route
 app.post('/api/login', async (req, res) => {
   const { identifier, password } = req.body;
   try {
@@ -88,14 +101,14 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({
       token,
-      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname, icon: user.icon, role: user.role },
+      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname || '', icon: user.icon || '', role: user.role },
     });
   } catch (error) {
     res.status(500).json({ error: 'Login failed', details: error.message });
   }
 });
 
-// Update Profile (nickname and icon)
+// Update Profile
 app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, res) => {
   const { nickname } = req.body;
   const file = req.file;
@@ -103,7 +116,7 @@ app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, r
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (nickname) user.nickname = nickname;
+    if (nickname !== undefined) user.nickname = nickname;
 
     if (file) {
       const fileName = `icons/${req.user.id}/${Date.now()}_${file.originalname}`;
@@ -117,45 +130,158 @@ app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, r
     await user.save();
     res.json({
       message: 'Profile updated successfully',
-      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname, icon: user.icon, role: user.role },
+      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname || '', icon: user.icon || '', role: user.role },
     });
   } catch (error) {
     res.status(500).json({ error: 'Profile update failed', details: error.message });
   }
 });
 
-// Upload 3D Model and Preview
+// Upload Model
 app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, res) => {
-  const { fileName } = req.body;
+  const { name, description, fileType } = req.body;
   const files = req.files;
   if (!files || files.length === 0) return res.status(400).json({ error: 'No files provided' });
+  if (!name || !fileType) return res.status(400).json({ error: 'Name and fileType are required' });
+
   try {
-    const uploadPromises = files.map((file) =>
-      supabase.storage
-        .from('models')
-        .upload(`models/${req.user.id}/${fileName || file.originalname}`, file.buffer, {
-          contentType: file.mimetype,
-        })
-    );
+    const modelFile = files.find(f => f.originalname.match(/\.(obj|fbx|glb)$/i));
+    const previewFile = files.find(f => f.originalname.match(/\.(png|jpg|jpeg)$/i));
+    if (!modelFile) return res.status(400).json({ error: 'Model file (.obj, .fbx, .glb) required' });
+    if (!previewFile) return res.status(400).json({ error: 'Preview image (.png, .jpg, .jpeg) required' });
+
+    const modelFileName = `models/${req.user.id}/${name}.${fileType}`;
+    const previewFileName = `models/${req.user.id}/${name}.png`;
+    const uploadPromises = [
+      supabase.storage.from('models').upload(modelFileName, modelFile.buffer, { contentType: modelFile.mimetype }),
+      supabase.storage.from('models').upload(previewFileName, previewFile.buffer, { contentType: 'image/png' }),
+    ];
+
+    const mtlFile = files.find(f => f.originalname.match(/\.mtl$/i));
+    if (mtlFile) {
+      const mtlFileName = `models/${req.user.id}/${name}.mtl`;
+      uploadPromises.push(
+        supabase.storage.from('models').upload(mtlFileName, mtlFile.buffer, { contentType: 'text/plain' })
+      );
+    }
+
     const results = await Promise.all(uploadPromises);
-    const errors = results.filter((result) => result.error);
+    const errors = results.filter(r => r.error);
     if (errors.length > 0) throw errors[0].error;
-    res.json({ message: 'Files uploaded successfully', paths: results.map((result) => result.data.path) });
+
+    const model = new Model({
+      name,
+      description: description || '',
+      fileType: fileType.toLowerCase(),
+      owner: req.user.id,
+      filePath: modelFileName,
+      previewPath: previewFileName,
+    });
+    await model.save();
+
+    res.json({ message: 'Model uploaded successfully', model });
   } catch (error) {
     res.status(500).json({ error: 'Upload failed', details: error.message });
   }
 });
 
-// Get User's Models
-app.get('/api/models', authenticateToken, async (req, res) => {
+// Get All Models
+app.get('/api/models', async (req, res) => {
   try {
-    const { data, error } = await supabase.storage
-      .from('models')
-      .list(`models/${req.user.id}`);
-    if (error) throw error;
-    res.json(data);
+    const models = await Model.find().populate('owner', 'username nickname');
+    res.json(models);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch models', details: error.message });
+  }
+});
+
+// Get User's Models
+app.get('/api/user/models', authenticateToken, async (req, res) => {
+  try {
+    const models = await Model.find({ owner: req.user.id });
+    res.json(models);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user models', details: error.message });
+  }
+});
+
+// Update Model
+app.put('/api/models/:id', authenticateToken, upload.array('file', 3), async (req, res) => {
+  const { id } = req.params;
+  const { name, description, fileType } = req.body;
+  const files = req.files;
+  try {
+    const model = await Model.findById(id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
+    if (model.owner.toString() !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
+
+    if (name) model.name = name;
+    if (description) model.description = description;
+    if (fileType) model.fileType = fileType.toLowerCase();
+
+    if (files.length > 0) {
+      const modelFile = files.find(f => f.originalname.match(/\.(obj|fbx|glb)$/i));
+      const previewFile = files.find(f => f.originalname.match(/\.(png|jpg|jpeg)$/i));
+      const mtlFile = files.find(f => f.originalname.match(/\.mtl$/i));
+
+      if (modelFile) {
+        const modelFileName = `models/${req.user.id}/${name || model.name}.${model.fileType}`;
+        const { error } = await supabase.storage.from('models').upload(modelFileName, modelFile.buffer, {
+          contentType: modelFile.mimetype,
+          upsert: true,
+        });
+        if (error) throw error;
+        model.filePath = modelFileName;
+      }
+
+      if (previewFile) {
+        const previewFileName = `models/${req.user.id}/${name || model.name}.png`;
+        const { error } = await supabase.storage.from('models').upload(previewFileName, previewFile.buffer, {
+          contentType: 'image/png',
+          upsert: true,
+        });
+        if (error) throw error;
+        model.previewPath = previewFileName;
+      }
+
+      if (mtlFile) {
+        const mtlFileName = `models/${req.user.id}/${name || model.name}.mtl`;
+        const { error } = await supabase.storage.from('models').upload(mtlFileName, mtlFile.buffer, {
+          contentType: 'text/plain',
+          upsert: true,
+        });
+        if (error) throw error;
+      }
+    }
+
+    await model.save();
+    res.json({ message: 'Model updated successfully', model });
+  } catch (error) {
+    res.status(500).json({ error: 'Update failed', details: error.message });
+  }
+});
+
+// Delete Model
+app.delete('/api/models/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const model = await Model.findById(id);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
+    if (model.owner.toString() !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
+
+    const deletePromises = [
+      supabase.storage.from('models').remove([model.filePath]),
+      supabase.storage.from('models').remove([model.previewPath]),
+    ];
+    if (model.fileType === 'obj') {
+      deletePromises.push(supabase.storage.from('models').remove([model.filePath.replace('.obj', '.mtl')]));
+    }
+    await Promise.all(deletePromises);
+
+    await model.deleteOne();
+    res.json({ message: 'Model deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Deletion failed', details: error.message });
   }
 });
 
@@ -168,7 +294,7 @@ app.get('/api/models/:fileName', authenticateToken, async (req, res) => {
       .download(`models/${req.user.id}/${fileName}`);
     if (error) throw error;
     const arrayBuffer = await data.arrayBuffer();
-    res.setHeader('Content-Type', fileName.endsWith('.glb') ? 'model/gltf-binary' : fileName.endsWith('.png') ? 'image/png' : 'application/octet-stream');
+    res.setHeader('Content-Type', fileName.endsWith('.glb') ? 'model/gltf-binary' : fileName.endsWith('.png') ? 'image/png' : fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') ? 'image/jpeg' : fileName.endsWith('.fbx') ? 'model/vnd.fbx' : 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(Buffer.from(arrayBuffer));
   } catch (error) {
