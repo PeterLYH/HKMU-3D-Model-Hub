@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Model Schema
 const modelSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -76,6 +77,8 @@ const commentSchema = new mongoose.Schema({
 });
 const Comment = mongoose.model('Comment', commentSchema);
 
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 =======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
 // Middleware to verify JWT
@@ -108,12 +111,16 @@ app.post('/api/register', async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 <<<<<<< HEAD
+<<<<<<< HEAD
     const user = new User({
       username,
       email,
       password: hashedPassword,
       nickname: nickname || '',
     });
+=======
+    const user = new User({ username, email, password: hashedPassword, nickname: nickname || username });
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 =======
     const user = new User({ username, email, password: hashedPassword, nickname: nickname || username });
 >>>>>>> parent of 8d5df78 (version 1.0.1)
@@ -183,6 +190,7 @@ app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, 
   if (!files || files.length === 0) return res.status(400).json({ error: 'No files provided' });
   try {
 <<<<<<< HEAD
+<<<<<<< HEAD
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -207,6 +215,8 @@ app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, 
     }
 
 =======
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
     const uploadPromises = files.map((file) =>
       supabase.storage
         .from('models')
@@ -214,6 +224,7 @@ app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, 
           contentType: file.mimetype,
         })
     );
+<<<<<<< HEAD
 >>>>>>> parent of 8d5df78 (version 1.0.1)
     const results = await Promise.all(uploadPromises);
     const errors = results.filter((result) => result.error);
@@ -236,6 +247,12 @@ app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, 
 =======
     res.json({ message: 'Files uploaded successfully', paths: results.map((result) => result.data.path) });
 >>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
+    const results = await Promise.all(uploadPromises);
+    const errors = results.filter((result) => result.error);
+    if (errors.length > 0) throw errors[0].error;
+    res.json({ message: 'Files uploaded successfully', paths: results.map((result) => result.data.path) });
+>>>>>>> parent of 8d5df78 (version 1.0.1)
   } catch (error) {
     console.error('Upload error:', error.message);
     res.status(500).json({ error: 'Upload failed', details: error.message });
@@ -256,6 +273,7 @@ app.get('/api/models', authenticateToken, async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 // Get Single Model by ID
 app.get('/api/models/:id', async (req, res) => {
@@ -372,6 +390,8 @@ app.delete('/api/models/:id', authenticateToken, async (req, res) => {
   }
 });
 
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 =======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
 // Download Model

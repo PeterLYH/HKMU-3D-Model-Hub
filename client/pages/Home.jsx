@@ -1,6 +1,10 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+=======
+import { useState, useEffect, useRef } from 'react';
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 =======
 import { useState, useEffect, useRef } from 'react';
 >>>>>>> parent of 8d5df78 (version 1.0.1)
@@ -78,6 +82,7 @@ function Home() {
   const [error, setError] = useState('');
   const token = localStorage.getItem('token');
 <<<<<<< HEAD
+<<<<<<< HEAD
   const navigate = useNavigate();
   const SUPABASE_URL = 'https://qrrxxlditjguauylnxhy.supabase.co'; // Hardcoded for local testing
 
@@ -86,6 +91,12 @@ function Home() {
       console.log('No token found, redirecting to /login');
       navigate('/login', { replace: true });
     } else {
+=======
+  const canvasRef = useRef();
+
+  useEffect(() => {
+    if (token) {
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 =======
   const canvasRef = useRef();
 
@@ -150,6 +161,7 @@ function Home() {
     }
   };
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   const handleEdit = async (e, modelId) => {
     e.preventDefault();
@@ -218,6 +230,9 @@ function Home() {
 =======
   const handleDownload = async (fileName) => {
 >>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
+  const handleDownload = async (fileName) => {
+>>>>>>> parent of 8d5df78 (version 1.0.1)
     try {
       const response = await axios.get(`http://localhost:5000/api/models/download/${fileName}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -244,9 +259,12 @@ function Home() {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   if (!token) {
     return null;
 =======
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
   const handleView = (fileName) => {
     const modelUrl = `https://qrrxxlditjguauylnxhy.supabase.co/storage/v1/object/public/models/models/${localStorage.getItem('userId')}/${fileName}`;
     const previewUrl = modelUrl.replace(/\.[^/.]+$/, '.png');
@@ -263,11 +281,15 @@ function Home() {
       array.push(binary.charCodeAt(i));
     }
     return new Blob([new Uint8Array(array)], { type: mime });
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
   }
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
+<<<<<<< HEAD
 <<<<<<< HEAD
       <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">HKMU 3D Model Hub - My Models</h1>
       <div className="max-w-6xl mx-auto p-4">
@@ -319,6 +341,30 @@ function Home() {
               <li key={model.name} className="flex space-x-2 items-center">
                 <span>{model.name}</span>
                 <button
+=======
+      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">HKMU 3D Model Hub</h1>
+      {token ? (
+        <div className="max-w-4xl mx-auto p-4 space-y-4 bg-white rounded-lg shadow-md">
+          <form onSubmit={handleUpload} className="space-y-4">
+            <input
+              type="file"
+              accept=".glb,.obj,.mtl"
+              multiple
+              onChange={handleFileChange}
+              className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">
+              Upload Model
+            </button>
+          </form>
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          <h2 className="text-xl font-semibold mt-8">Your Models</h2>
+          <ul className="space-y-2">
+            {models.map((model) => (
+              <li key={model.name} className="flex space-x-2 items-center">
+                <span>{model.name}</span>
+                <button
+>>>>>>> parent of 8d5df78 (version 1.0.1)
                   onClick={() => handleDownload(model.name)}
                   className="text-blue-600 hover:underline"
 >>>>>>> parent of 8d5df78 (version 1.0.1)
@@ -327,15 +373,19 @@ function Home() {
                 </button>
                 <button
 <<<<<<< HEAD
+<<<<<<< HEAD
                   onClick={() => setShowEditModal(model)}
                   className="text-blue-600 hover:underline text-sm"
 =======
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
                   onClick={() => handleView(model.name)}
                   className="text-blue-600 hover:underline"
 >>>>>>> parent of 8d5df78 (version 1.0.1)
                 >
                   View
                 </button>
+<<<<<<< HEAD
 <<<<<<< HEAD
                 <button
                   onClick={() => handleDelete(model._id)}
@@ -536,12 +586,32 @@ function Home() {
                 <OrbitControls />
               </Canvas>
             </div>
+=======
+              </li>
+            ))}
+          </ul>
+          {files.length > 0 && (
+            <div className="hidden">
+              <Canvas ref={canvasRef} gl={{ antialias: true, preserveDrawingBuffer: true }}>
+                <ambientLight intensity={0.5} />
+                <pointLight position={[10, 10, 10]} />
+                <ModelViewer
+                  url={`https://qrrxxlditjguauylnxhy.supabase.co/storage/v1/object/public/models/models/${localStorage.getItem('userId')}/${fileName}`}
+                  onSnapshot={handleSnapshot}
+                />
+                <OrbitControls />
+              </Canvas>
+            </div>
+>>>>>>> parent of 8d5df78 (version 1.0.1)
           )}
           {selectedModel && (
             <div className="preview-container bg-gray-200 rounded-lg p-4">
               <img src={selectedModel} alt="Model Preview" className="w-full h-auto max-h-96 object-contain" />
             </div>
           )}
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
         </div>
       ) : (

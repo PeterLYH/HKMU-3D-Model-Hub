@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import Home from './pages/Home';
 =======
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -13,8 +16,11 @@ import Browser from './pages/Browser';
 import ModelDetails from './pages/ModelDetails';
 import Profile from './pages/Profile';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import Contact from './pages/Contact';
 import Navbar from './components/Navbar';
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 =======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
 

@@ -40,6 +40,7 @@ function Register() {
     }
     try {
 <<<<<<< HEAD
+<<<<<<< HEAD
       const response = await axios.post('http://localhost:5000/api/register', {
         username,
         email,
@@ -56,6 +57,8 @@ function Register() {
       alert(response.data.message);
       navigate('/login', { replace: true });
 =======
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
       await axios.post('http://localhost:5000/api/register', formData);
       if (icon) {
         const loginResponse = await axios.post('http://localhost:5000/api/login', {
@@ -76,6 +79,9 @@ function Register() {
         });
       }
       navigate('/');
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
     } catch (error) {
       console.error('Registration error:', error.response?.data);
@@ -97,6 +103,7 @@ function Register() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="max-w-md w-full bg-white p-6 rounded-lg shadow-md">
 <<<<<<< HEAD
+<<<<<<< HEAD
         <h2 className="text-2xl font-bold mb-4 text-center">Register</h2>
         <form
           ref={formRef}
@@ -106,6 +113,8 @@ function Register() {
           key={formKey}
         >
 =======
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Register</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
 >>>>>>> parent of 8d5df78 (version 1.0.1)
@@ -130,6 +139,9 @@ function Register() {
               value={formData.username}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
               required
             />
@@ -155,6 +167,9 @@ function Register() {
               value={formData.email}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
               required
             />
@@ -180,11 +195,15 @@ function Register() {
               value={formData.password}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
               required
             />
           </div>
           <div>
+<<<<<<< HEAD
 <<<<<<< HEAD
             <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">
               Nickname (Optional)
@@ -201,6 +220,8 @@ function Register() {
               data-lpignore="true"
               data-form-type="other"
 =======
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
             <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">Nickname</label>
             <input
               type="text"

@@ -4,6 +4,7 @@ import axios from 'axios';
 
 function Login() {
 <<<<<<< HEAD
+<<<<<<< HEAD
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -42,6 +43,19 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+=======
+  const [formData, setFormData] = useState({ identifier: '', password: '' });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+>>>>>>> parent of 8d5df78 (version 1.0.1)
       const response = await axios.post('http://localhost:5000/api/login', formData);
       console.log('Login response:', response.data);
       localStorage.setItem('token', response.data.token);
@@ -49,6 +63,9 @@ function Login() {
       localStorage.setItem('nickname', response.data.user.nickname);
       localStorage.setItem('icon', response.data.user.icon);
       navigate('/');
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
     } catch (error) {
       setError(error.response?.data?.error || 'Login failed');
@@ -76,6 +93,9 @@ function Login() {
               value={formData.identifier}
               onChange={handleChange}
               className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+<<<<<<< HEAD
+>>>>>>> parent of 8d5df78 (version 1.0.1)
+=======
 >>>>>>> parent of 8d5df78 (version 1.0.1)
               required
             />
@@ -85,6 +105,7 @@ function Login() {
             <input
               type="password"
               id="password"
+<<<<<<< HEAD
 <<<<<<< HEAD
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -103,6 +124,15 @@ function Login() {
             />
             <label htmlFor="rememberMe" className="text-sm text-gray-600">Remember Me</label>
           </div>
+=======
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 =======
               name="password"
               value={formData.password}
