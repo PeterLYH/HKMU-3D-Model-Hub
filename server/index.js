@@ -14,13 +14,11 @@ const port = 5000;
 // Multer Configuration
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['model/gltf-binary', 'application/octet-stream', 'text/plain', 'image/png', 'image/jpeg', 'model/vnd.fbx'];
-  const allowedExtensions = ['.glb', '.obj', '.mtl', '.png', '.jpg', '.jpeg', '.fbx'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (allowedTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
+  const allowedTypes = ['model/gltf-binary', 'application/octet-stream', 'text/plain', 'image/png', 'image/jpeg'];
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only .glb, .obj, .mtl, .png, .jpg, .jpeg, and .fbx files are allowed.'), false);
+    cb(new Error('Invalid file type. Only .glb, .obj, .mtl, .png, and .jpeg files are allowed.'), false);
   }
 };
 const upload = multer({
@@ -49,10 +47,11 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, default: 'user', enum: ['user', 'admin'] },
   nickname: { type: String, default: '' },
-  icon: { type: String, default: '' },
+  icon: { type: String, default: '' }, // URL to icon in Supabase
 });
 const User = mongoose.model('User', userSchema);
 
+<<<<<<< HEAD
 // Model Schema
 const modelSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -77,6 +76,8 @@ const commentSchema = new mongoose.Schema({
 });
 const Comment = mongoose.model('Comment', commentSchema);
 
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 // Middleware to verify JWT
 const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
@@ -106,12 +107,16 @@ app.post('/api/register', async (req, res) => {
       });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
+<<<<<<< HEAD
     const user = new User({
       username,
       email,
       password: hashedPassword,
       nickname: nickname || '',
     });
+=======
+    const user = new User({ username, email, password: hashedPassword, nickname: nickname || username });
+>>>>>>> parent of 8d5df78 (version 1.0.1)
     await user.save();
     res.status(201).json({ message: 'User registered successfully. You can now log in.' });
   } catch (error) {
@@ -120,7 +125,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Login Route
+// Login Route (username or email)
 app.post('/api/login', async (req, res) => {
   const { identifier, password } = req.body;
   try {
@@ -133,7 +138,7 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({
       token,
-      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname || '', icon: user.icon || '', role: user.role },
+      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname, icon: user.icon, role: user.role },
     });
   } catch (error) {
     console.error('Login error:', error.message);
@@ -141,7 +146,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Update Profile
+// Update Profile (nickname and icon)
 app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, res) => {
   const { nickname } = req.body;
   const file = req.file;
@@ -149,7 +154,7 @@ app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, r
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (nickname !== undefined) user.nickname = nickname;
+    if (nickname) user.nickname = nickname;
 
     if (file) {
       const fileName = `icons/${req.user.id}/${Date.now()}_${file.originalname}`;
@@ -163,7 +168,7 @@ app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, r
     await user.save();
     res.json({
       message: 'Profile updated successfully',
-      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname || '', icon: user.icon || '', role: user.role },
+      user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname, icon: user.icon, role: user.role },
     });
   } catch (error) {
     console.error('Profile update error:', error.message);
@@ -171,14 +176,13 @@ app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, r
   }
 });
 
-// Upload Model
+// Upload 3D Model and Preview
 app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, res) => {
-  const { name, description, fileType } = req.body;
+  const { fileName } = req.body;
   const files = req.files;
   if (!files || files.length === 0) return res.status(400).json({ error: 'No files provided' });
-  if (!name || !fileType) return res.status(400).json({ error: 'Name and fileType are required' });
-
   try {
+<<<<<<< HEAD
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -202,9 +206,19 @@ app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, 
       );
     }
 
+=======
+    const uploadPromises = files.map((file) =>
+      supabase.storage
+        .from('models')
+        .upload(`models/${req.user.id}/${fileName || file.originalname}`, file.buffer, {
+          contentType: file.mimetype,
+        })
+    );
+>>>>>>> parent of 8d5df78 (version 1.0.1)
     const results = await Promise.all(uploadPromises);
-    const errors = results.filter(r => r.error);
+    const errors = results.filter((result) => result.error);
     if (errors.length > 0) throw errors[0].error;
+<<<<<<< HEAD
 
     const model = new Model({
       name,
@@ -219,23 +233,30 @@ app.post('/api/models', authenticateToken, upload.array('file', 3), async (req, 
     await model.save();
 
     res.json({ message: 'Model uploaded successfully', model });
+=======
+    res.json({ message: 'Files uploaded successfully', paths: results.map((result) => result.data.path) });
+>>>>>>> parent of 8d5df78 (version 1.0.1)
   } catch (error) {
     console.error('Upload error:', error.message);
     res.status(500).json({ error: 'Upload failed', details: error.message });
   }
 });
 
-// Get All Models
-app.get('/api/models', async (req, res) => {
+// Get User's Models
+app.get('/api/models', authenticateToken, async (req, res) => {
   try {
-    const models = await Model.find().populate('owner', 'username nickname');
-    res.json(models);
+    const { data, error } = await supabase.storage
+      .from('models')
+      .list(`models/${req.user.id}`);
+    if (error) throw error;
+    res.json(data);
   } catch (error) {
     console.error('Fetch models error:', error.message);
     res.status(500).json({ error: 'Failed to fetch models', details: error.message });
   }
 });
 
+<<<<<<< HEAD
 // Get Single Model by ID
 app.get('/api/models/:id', async (req, res) => {
   try {
@@ -351,6 +372,8 @@ app.delete('/api/models/:id', authenticateToken, async (req, res) => {
   }
 });
 
+=======
+>>>>>>> parent of 8d5df78 (version 1.0.1)
 // Download Model
 app.get('/api/models/download/:fileName', authenticateToken, async (req, res) => {
   try {
@@ -372,7 +395,7 @@ app.get('/api/models/download/:fileName', authenticateToken, async (req, res) =>
     model.downloads = (model.downloads || 0) + 1;
     await model.save();
     const arrayBuffer = await data.arrayBuffer();
-    res.setHeader('Content-Type', fileName.endsWith('.glb') ? 'model/gltf-binary' : fileName.endsWith('.png') ? 'image/png' : fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') ? 'image/jpeg' : fileName.endsWith('.fbx') ? 'model/vnd.fbx' : 'application/octet-stream');
+    res.setHeader('Content-Type', fileName.endsWith('.glb') ? 'model/gltf-binary' : fileName.endsWith('.png') ? 'image/png' : 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(Buffer.from(arrayBuffer));
   } catch (error) {

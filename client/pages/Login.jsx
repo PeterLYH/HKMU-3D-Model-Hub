@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Login() {
+<<<<<<< HEAD
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -29,6 +30,26 @@ function Login() {
       }
       window.dispatchEvent(new Event('loginUpdate'));
       navigate('/my-models', { replace: true });
+=======
+  const [formData, setFormData] = useState({ identifier: '', password: '' });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/api/login', formData);
+      console.log('Login response:', response.data);
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('userId', response.data.user.id);
+      localStorage.setItem('nickname', response.data.user.nickname);
+      localStorage.setItem('icon', response.data.user.icon);
+      navigate('/');
+>>>>>>> parent of 8d5df78 (version 1.0.1)
     } catch (error) {
       setError(error.response?.data?.error || 'Login failed');
       console.error('Login error:', error.response?.data);
@@ -45,10 +66,17 @@ function Login() {
             <input
               type="text"
               id="identifier"
+<<<<<<< HEAD
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               className="w-full p-2 border rounded-md"
               autoComplete={rememberMe ? 'on' : 'off'}
+=======
+              name="identifier"
+              value={formData.identifier}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+>>>>>>> parent of 8d5df78 (version 1.0.1)
               required
             />
           </div>
@@ -57,6 +85,7 @@ function Login() {
             <input
               type="password"
               id="password"
+<<<<<<< HEAD
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2 border rounded-md"
@@ -74,6 +103,15 @@ function Login() {
             />
             <label htmlFor="rememberMe" className="text-sm text-gray-600">Remember Me</label>
           </div>
+=======
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+>>>>>>> parent of 8d5df78 (version 1.0.1)
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <button
             type="submit"
