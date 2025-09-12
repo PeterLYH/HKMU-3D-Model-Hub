@@ -15,7 +15,7 @@ function ModelDetails() {
   useEffect(() => {
     const fetchModel = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/models/${id}`);
+        const response = await axios.get(`http://localhost:5000/api/models/${id}`);
         setModel(response.data);
         setError('');
       } catch (error) {
@@ -26,7 +26,7 @@ function ModelDetails() {
 
     const fetchComments = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/models/${id}/comments`);
+        const response = await axios.get(`http://localhost:5000/api/models/${id}/comments`);
         setComments(response.data);
       } catch (error) {
         console.error('Fetch comments error:', error.response?.data);
@@ -52,7 +52,7 @@ function ModelDetails() {
     try {
       const token = localStorage.getItem('token');
       const fileName = model.filePath.split('/').pop(); // Use the actual filePath's filename
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/models/download/${fileName}`, {
+      const response = await axios.get(`http://localhost:5000/api/models/download/${fileName}`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob',
       });
@@ -70,7 +70,7 @@ function ModelDetails() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       // Refresh model to update downloads count
-      const updatedModel = await axios.get(`${import.meta.env.VITE_API_URL}/api/models/${id}`);
+      const updatedModel = await axios.get(`http://localhost:5000/api/models/${id}`);
       setModel(updatedModel.data);
     } catch (error) {
       setError(error.message || 'Download failed');
@@ -87,7 +87,7 @@ function ModelDetails() {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
       if (!userId) throw new Error('User ID not found');
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/models/${id}/like`, {}, {
+      const response = await axios.post(`http://localhost:5000/api/models/${id}/like`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setModel({ ...model, likes: response.data.likes });
@@ -109,7 +109,7 @@ function ModelDetails() {
     }
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/models/${id}/comments`, { content: newComment }, {
+      const response = await axios.post(`http://localhost:5000/api/models/${id}/comments`, { content: newComment }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setComments([...comments, response.data.comment]);

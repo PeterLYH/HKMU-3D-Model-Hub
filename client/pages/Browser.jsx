@@ -10,7 +10,7 @@ function Browser() {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await axios.get('${import.meta.env.VITE_API_URL}/api/models');
+        const response = await axios.get('http://localhost:5000/api/models');
         setModels(response.data);
         setError('');
       } catch (error) {

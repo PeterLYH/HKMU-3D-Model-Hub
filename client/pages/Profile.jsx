@@ -33,7 +33,7 @@ function Profile() {
     formDataToSend.append('nickname', formData.nickname);
     if (icon) formDataToSend.append('icon', icon);
     try {
-      const response = await axios.post('${import.meta.env.VITE_API_URL}/api/profile', formDataToSend, {
+      const response = await axios.post('http://localhost:5000/api/profile', formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
