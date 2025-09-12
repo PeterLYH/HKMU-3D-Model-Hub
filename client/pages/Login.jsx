@@ -1,51 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Login() {
-  const [formData, setFormData] = useState({
-    identifier: localStorage.getItem('rememberedIdentifier') || '',
-    password: localStorage.getItem('rememberedPassword') || '',
-    rememberMe: false,
-  });
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const rememberedIdentifier = localStorage.getItem('rememberedIdentifier');
-    const rememberedPassword = localStorage.getItem('rememberedPassword');
-    if (rememberedIdentifier && rememberedPassword) {
-      setFormData((prev) => ({ ...prev, rememberMe: true }));
-    }
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/api/login', {
-        identifier: formData.identifier,
-        password: formData.password,
+      const response = await axios.post('${import.meta.env.VITE_API_URL}/api/login', {
+        identifier,
+        password,
       });
-      console.log('Login response:', response.data);
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('userId', response.data.user.id);
-      localStorage.setItem('username', response.data.user.username);
+      localStorage.setItem('userId', response.data.user.id); // Store userId
       localStorage.setItem('nickname', response.data.user.nickname || '');
-      localStorage.setItem('icon', response.data.user.icon || '');
-      if (formData.rememberMe) {
-        localStorage.setItem('rememberedIdentifier', formData.identifier);
-        localStorage.setItem('rememberedPassword', formData.password);
+      localStorage.setItem('username', response.data.user.username);
+      if (rememberMe) {
+        localStorage.setItem('identifier', identifier);
+        localStorage.setItem('password', password);
       } else {
-        localStorage.removeItem('rememberedIdentifier');
-        localStorage.removeItem('rememberedPassword');
+        localStorage.removeItem('identifier');
+        localStorage.removeItem('password');
       }
       window.dispatchEvent(new Event('loginUpdate'));
-      navigate('/browser');
+      navigate('/my-models', { replace: true });
     } catch (error) {
       setError(error.response?.data?.error || 'Login failed');
       console.error('Login error:', error.response?.data);
@@ -53,20 +36,19 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="max-w-md w-full bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Login to HKMU 3D Model Hub</h1>
+        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">Username or Email</label>
             <input
               type="text"
               id="identifier"
-              name="identifier"
-              value={formData.identifier}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
-              autoComplete={formData.rememberMe ? 'on' : 'off'}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              autoComplete={rememberMe ? 'on' : 'off'}
               required
             />
           </div>
@@ -75,11 +57,10 @@ function Login() {
             <input
               type="password"
               id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
-              autoComplete={formData.rememberMe ? 'on' : 'new-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              autoComplete={rememberMe ? 'on' : 'off'}
               required
             />
           </div>
@@ -87,15 +68,17 @@ function Login() {
             <input
               type="checkbox"
               id="rememberMe"
-              name="rememberMe"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="mr-2"
             />
-            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">Remember Me</label>
+            <label htmlFor="rememberMe" className="text-sm text-gray-600">Remember Me</label>
           </div>
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition"
+          >
             Login
           </button>
         </form>

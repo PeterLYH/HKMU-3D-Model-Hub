@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 function Home() {
@@ -14,12 +14,12 @@ function Home() {
   const [showEditModal, setShowEditModal] = useState(null);
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const SUPABASE_URL = 'https://qrrxxlditjguauylnxhy.supabase.co'; // Hardcoded for local testing
 
-  // Redirect immediately if not authenticated
   useEffect(() => {
     if (!token) {
       console.log('No token found, redirecting to /login');
-      navigate('/login', { replace: true }); // Use replace to avoid adding to history
+      navigate('/login', { replace: true });
     } else {
       fetchModels();
     }
@@ -27,7 +27,7 @@ function Home() {
 
   const fetchModels = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/user/models', {
+      const response = await axios.get('${import.meta.env.VITE_API_URL}/api/user/models', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setModels(response.data);
@@ -72,7 +72,7 @@ function Home() {
     formData.append('description', description);
     formData.append('fileType', fileType);
     try {
-      const response = await axios.post('http://localhost:5000/api/models', formData, {
+      const response = await axios.post('${import.meta.env.VITE_API_URL}/api/models', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -112,7 +112,7 @@ function Home() {
       formData.append('file', previewFile);
     }
     try {
-      const response = await axios.put(`http://localhost:5000/api/models/${modelId}`, formData, {
+      const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/models/${modelId}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -140,7 +140,7 @@ function Home() {
     }
     if (!window.confirm('Are you sure you want to delete this model?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/models/${modelId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/models/${modelId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchModels();
@@ -150,10 +150,6 @@ function Home() {
     }
   };
 
-  const handleView = (previewPath) => {
-    window.open(`https://qrrxxlditjguauylnxhy.supabase.co/storage/v1/object/public/models/${previewPath}`, '_blank');
-  };
-
   const handleDownload = async (filePath, fileName) => {
     if (!token) {
       console.log('No token found during download, redirecting to /login');
@@ -161,24 +157,30 @@ function Home() {
       return;
     }
     try {
-      const response = await axios.get(`http://localhost:5000/api/models/${fileName}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/models/download/${fileName}`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob',
       });
+      const contentType = response.headers['content-type'];
+      if (contentType === 'application/json') {
+        const errorData = JSON.parse(await response.data.text());
+        throw new Error(errorData.error || 'Download failed');
+      }
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      fetchModels();
     } catch (error) {
-      setError(error.response?.data?.error || 'Download failed');
-      console.error('Download error:', error.response?.data);
+      setError(error.message || 'Download failed');
+      console.error('Download error:', error);
     }
   };
 
-  // Render nothing until authenticated
   if (!token) {
     return null;
   }
@@ -194,34 +196,36 @@ function Home() {
           Upload Model
         </button>
         {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {models.map((model) => (
-            <div key={model._id} className="bg-white p-4 rounded-lg shadow-md">
-              <img
-                src={`https://qrrxxlditjguauylnxhy.supabase.co/storage/v1/object/public/models/${model.previewPath}`}
-                alt={model.name}
-                className="w-full h-48 object-contain mb-4 cursor-pointer"
-                onClick={() => handleView(model.previewPath)}
-              />
-              <h3 className="text-lg font-semibold">{model.name}</h3>
-              <p className="text-sm text-gray-600">Type: {model.fileType.toUpperCase()}</p>
-              <p className="text-sm text-gray-600">Description: {model.description || 'None'}</p>
+            <div key={model._id} className="bg-white p-3 rounded-lg shadow-md">
+              <Link to={`/models/${model._id}`}>
+                <img
+                  src={`${SUPABASE_URL}/storage/v1/object/public/models/${model.previewPath}`}
+                  alt={model.name}
+                  className="w-full h-32 object-contain mb-2 rounded-md"
+                />
+                <h3 className="text-base font-semibold truncate">{model.name}</h3>
+              </Link>
+              <p className="text-sm text-gray-600 truncate">Type: {model.fileType.toUpperCase()}</p>
+              <p className="text-sm text-gray-600 truncate">Description: {model.description || 'None'}</p>
+              <p className="text-sm text-gray-600">Likes: {Array.isArray(model.likes) ? model.likes.length : 0}</p>
               <div className="flex space-x-2 mt-2">
                 <button
                   onClick={() => handleDownload(model.filePath, `${model.name}.${model.fileType}`)}
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline text-sm"
                 >
                   Download
                 </button>
                 <button
                   onClick={() => setShowEditModal(model)}
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline text-sm"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(model._id)}
-                  className="text-red-600 hover:underline"
+                  className="text-red-600 hover:underline text-sm"
                 >
                   Delete
                 </button>
@@ -231,7 +235,6 @@ function Home() {
         </div>
       </div>
 
-      {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-30 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
@@ -320,7 +323,6 @@ function Home() {
         </div>
       )}
 
-      {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-30 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
