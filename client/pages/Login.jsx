@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Login() {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState(localStorage.getItem('rememberedIdentifier') || '');
+  const [password, setPassword] = useState(localStorage.getItem('rememberedPassword') || '');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -13,8 +13,6 @@ function Login() {
     const rememberedIdentifier = localStorage.getItem('rememberedIdentifier');
     const rememberedPassword = localStorage.getItem('rememberedPassword');
     if (rememberedIdentifier && rememberedPassword) {
-      setIdentifier(rememberedIdentifier);
-      setPassword(rememberedPassword);
       setRememberMe(true);
     }
   }, []);
@@ -32,7 +30,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://hkmu-3d-model-hub-backend.onrender.com/api/login', {
+      const response = await axios.post('http://localhost:5000/api/login', {
         identifier,
         password,
       });
@@ -42,6 +40,7 @@ function Login() {
       localStorage.setItem('username', response.data.user.username);
       localStorage.setItem('nickname', response.data.user.nickname || '');
       localStorage.setItem('icon', response.data.user.icon || '');
+      localStorage.setItem('role', response.data.user.role); // Store role
       if (rememberMe) {
         localStorage.setItem('rememberedIdentifier', identifier);
         localStorage.setItem('rememberedPassword', password);

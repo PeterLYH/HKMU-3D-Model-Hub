@@ -8,6 +8,8 @@ import Register from './pages/Register';
 import Contact from './pages/Contact';
 import Profile from './pages/Profile';
 import ModelDetails from './pages/ModelDetails';
+import AdminUsers from './pages/AdminUsers';
+import AdminModels from './pages/AdminModels';
 import { useEffect, useState } from 'react';
 
 function ProtectedRoute({ children }) {
@@ -15,6 +17,16 @@ function ProtectedRoute({ children }) {
   if (!token) {
     console.log('ProtectedRoute: No token found, redirecting to /login');
     return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+  if (!token || role !== 'admin') {
+    console.log('AdminRoute: Admin access required, redirecting to /browser');
+    return <Navigate to="/browser" replace />;
   }
   return children;
 }
@@ -38,6 +50,7 @@ function AutoLogout() {
         localStorage.removeItem('username');
         localStorage.removeItem('nickname');
         localStorage.removeItem('icon');
+        localStorage.removeItem('role');
         localStorage.removeItem('rememberedIdentifier');
         localStorage.removeItem('rememberedPassword');
         window.dispatchEvent(new Event('loginUpdate'));
@@ -72,7 +85,8 @@ function App() {
     localStorage.removeItem('username');
     localStorage.removeItem('nickname');
     localStorage.removeItem('icon');
-    window.dispatchEvent(new Event('loginUpdate')); // Trigger Navbar update
+    localStorage.removeItem('role');
+    window.dispatchEvent(new Event('loginUpdate'));
     console.log('Cleared login state on app load');
   }, []);
 
@@ -91,6 +105,9 @@ function App() {
             <Route path="/models/:id" element={<ModelDetails />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
+            <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
           </Routes>
         </main>
         <Footer />
