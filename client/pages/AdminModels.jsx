@@ -20,7 +20,7 @@ function AdminModels() {
 
   const fetchModels = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/models', {
+      const response = await axios.get('https://hkmu-3d-model-hub-backend.onrender.com/api/admin/models', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setModels(response.data);
@@ -38,7 +38,7 @@ function AdminModels() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(`http://localhost:5000/api/admin/models/${editModel}`, editForm, {
+      const response = await axios.put(`https://hkmu-3d-model-hub-backend.onrender.com/api/admin/models/${editModel}`, editForm, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setModels(models.map(m => m._id === editModel ? response.data.model : m));
@@ -53,7 +53,7 @@ function AdminModels() {
   const handleDelete = async (modelId) => {
     if (!window.confirm('Are you sure you want to delete this model?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/models/${modelId}`, {
+      await axios.delete(`https://hkmu-3d-model-hub-backend.onrender.com/api/admin/models/${modelId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setModels(models.filter(m => m._id !== modelId));
