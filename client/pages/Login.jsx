@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Login() {
-  const [identifier, setIdentifier] = useState(localStorage.getItem('rememberedIdentifier') || '');
-  const [password, setPassword] = useState(localStorage.getItem('rememberedPassword') || '');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -13,6 +13,8 @@ function Login() {
     const rememberedIdentifier = localStorage.getItem('rememberedIdentifier');
     const rememberedPassword = localStorage.getItem('rememberedPassword');
     if (rememberedIdentifier && rememberedPassword) {
+      setIdentifier(rememberedIdentifier);
+      setPassword(rememberedPassword);
       setRememberMe(true);
     }
   }, []);
@@ -30,7 +32,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/api/login', {
+      const response = await axios.post('https://hkmu-3d-model-hub-backend.onrender.com/api/login', {
         identifier,
         password,
       });

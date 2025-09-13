@@ -13,7 +13,7 @@ function ContactForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/contact', formData);
+      await axios.post('https://hkmu-3d-model-hub-backend.onrender.com/api/contact', formData);
       setSuccess('Message sent successfully!');
       setFormData({ name: '', email: '', message: '' });
       setError('');

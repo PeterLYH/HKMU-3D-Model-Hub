@@ -10,7 +10,7 @@ function Browser() {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/models');
+        const response = await axios.get('https://hkmu-3d-model-hub-backend.onrender.com/api/models');
         setModels(response.data);
         setError('');
       } catch (error) {

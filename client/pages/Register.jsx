@@ -43,7 +43,7 @@ function Register() {
 
     setIsLoading(true);
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/register`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'https://hkmu-3d-model-hub-backend.onrender.com'}/api/register`, {
         username,
         email,
         password,

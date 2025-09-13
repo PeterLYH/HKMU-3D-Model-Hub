@@ -32,7 +32,7 @@ function Profile() {
     formDataToSend.append('nickname', formData.nickname);
     if (icon) formDataToSend.append('icon', icon);
     try {
-      const response = await axios.post('http://localhost:5000/api/profile', formDataToSend, {
+      const response = await axios.post('https://hkmu-3d-model-hub-backend.onrender.com/api/profile', formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

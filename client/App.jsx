@@ -65,6 +65,17 @@ function AutoLogout() {
 }
 
 function App() {
+  useEffect(() => {
+    // Clear login-related localStorage items on app load, except remembered credentials
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    localStorage.removeItem('nickname');
+    localStorage.removeItem('icon');
+    window.dispatchEvent(new Event('loginUpdate')); // Trigger Navbar update
+    console.log('Cleared login state on app load');
+  }, []);
+
   return (
     <Router>
       <div className="flex flex-col min-h-screen">

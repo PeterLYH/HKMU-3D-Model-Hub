@@ -27,7 +27,7 @@ function Home() {
 
   const fetchModels = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/user/models', {
+      const response = await axios.get('https://hkmu-3d-model-hub-backend.onrender.com/api/user/models', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setModels(response.data);
@@ -72,7 +72,7 @@ function Home() {
     formData.append('description', description);
     formData.append('fileType', fileType);
     try {
-      const response = await axios.post('http://localhost:5000/api/models', formData, {
+      const response = await axios.post('https://hkmu-3d-model-hub-backend.onrender.com/api/models', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -112,7 +112,7 @@ function Home() {
       formData.append('file', previewFile);
     }
     try {
-      const response = await axios.put(`http://localhost:5000/api/models/${modelId}`, formData, {
+      const response = await axios.put(`https://hkmu-3d-model-hub-backend.onrender.com/api/models/${modelId}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -140,7 +140,7 @@ function Home() {
     }
     if (!window.confirm('Are you sure you want to delete this model?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/models/${modelId}`, {
+      await axios.delete(`https://hkmu-3d-model-hub-backend.onrender.com/api/models/${modelId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchModels();
@@ -157,7 +157,7 @@ function Home() {
       return;
     }
     try {
-      const response = await axios.get(`http://localhost:5000/api/models/download/${fileName}`, {
+      const response = await axios.get(`https://hkmu-3d-model-hub-backend.onrender.com/api/models/download/${fileName}`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob',
       });
