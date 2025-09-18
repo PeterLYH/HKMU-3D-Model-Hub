@@ -8,8 +8,17 @@ const multer = require('multer');
 const path = require('path');
 require('dotenv').config();
 
+// Centralized Environment Variables
+const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const MONGODB_URI = process.env.MONGODB_URI;
+
 const app = express();
-const port = 5000;
+const server = app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
 
 // Multer Configuration
 const storage = multer.memoryStorage();
@@ -30,17 +39,17 @@ const upload = multer({
 });
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:5173', 'https://hkmu-3d-model-hub.vercel.app'] }));
+app.use(cors({ origin: ['http://localhost:5173', 'https://hkmu-3d-model-hub.vercel.app', 'https://hkmu-3d-model-hub-frontend.onrender.com'] }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB (HKMU 3D Model)'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Supabase Client
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -81,19 +90,37 @@ const Comment = mongoose.model('Comment', commentSchema);
 const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token provided' });
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
     req.user = user;
     next();
   });
 };
 
+// Admin Middleware (Single Declaration)
+const authenticateAdmin = (req, res, next) => {
+  authenticateToken(req, res, () => {
+    User.findById(req.user.id).then(user => {
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      req.user = user;
+      next();
+    }).catch(err => res.status(500).json({ error: 'Server error' }));
+  });
+};
+
+// Home Route
+app.get('/', (req, res) => {
+  res.status(200).json({ message: `Server running at http://localhost:${PORT} / DB connect succeed` });
+});
+
 // Register Route
 app.post('/api/register', async (req, res) => {
   const { username, email, password, nickname } = req.body;
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Username, email, and password are required' });
-  }
+  if (!username) return res.status(400).json({ error: 'Username is required' });
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+  if (!password) return res.status(400).json({ error: 'Password is required' });
   if (!email.endsWith('@hkmu.edu.hk') && !email.endsWith('@live.hkmu.edu.hk')) {
     return res.status(400).json({ error: 'Only HKMU email addresses (@hkmu.edu.hk or @live.hkmu.edu.hk) are allowed' });
   }
@@ -129,7 +156,7 @@ app.post('/api/login', async (req, res) => {
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
     res.json({
       token,
       user: { id: user._id, username: user.username, email: user.email, nickname: user.nickname || '', icon: user.icon || '', role: user.role },
@@ -156,7 +183,7 @@ app.post('/api/profile', authenticateToken, upload.single('icon'), async (req, r
         .from('models')
         .upload(fileName, file.buffer, { contentType: file.mimetype });
       if (error) throw error;
-      user.icon = `${process.env.SUPABASE_URL}/storage/v1/object/public/models/${fileName}`;
+      user.icon = `${SUPABASE_URL}/storage/v1/object/public/models/${fileName}`;
     }
 
     await user.save();
@@ -434,30 +461,11 @@ app.get('/api/models/:id/comments', async (req, res) => {
   }
 });
 
-// Contact Form
-app.post('/api/contact', async (req, res) => {
-  const { name, email, message } = req.body;
-  console.log('Received contact form submission:', { name, email, message });
-  res.status(200).json({ message: 'Form submission received!' });
-});
-
-// Admin Routes - Protected for admins only
-const authenticateAdmin = (req, res, next) => {
-  authenticateToken(req, res, () => {
-    User.findById(req.user.id).then(user => {
-      if (user.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      req.user = user;
-      next();
-    }).catch(err => res.status(500).json({ error: 'Server error' }));
-  });
-};
-
+// Admin Routes
 // Get All Users (Admin Only)
 app.get('/api/admin/users', authenticateAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, 'username email nickname icon role').populate('icon'); // Exclude password
+    const users = await User.find({}, 'username email nickname icon role');
     res.json(users);
   } catch (error) {
     console.error('Fetch users error:', error.message);
@@ -529,32 +537,32 @@ app.put('/api/admin/models/:id', authenticateAdmin, upload.array('file', 3), asy
 
       if (modelFile) {
         const modelFileName = `models/${model.owner}/${name || model.name}.${model.fileType}`;
-        const { error: uploadError } = await supabase.storage.from('models').upload(modelFileName, modelFile.buffer, {
+        const { error } = await supabase.storage.from('models').upload(modelFileName, modelFile.buffer, {
           contentType: modelFile.mimetype,
           upsert: true,
         });
-        if (uploadError) throw uploadError;
+        if (error) throw error;
         model.filePath = modelFileName;
         model.fileSize = modelFile.size;
       }
 
       if (previewFile) {
         const previewFileName = `models/${model.owner}/${name || model.name}.png`;
-        const { error: uploadError } = await supabase.storage.from('models').upload(previewFileName, previewFile.buffer, {
+        const { error } = await supabase.storage.from('models').upload(previewFileName, previewFile.buffer, {
           contentType: 'image/png',
           upsert: true,
         });
-        if (uploadError) throw uploadError;
+        if (error) throw error;
         model.previewPath = previewFileName;
       }
 
       if (mtlFile) {
         const mtlFileName = `models/${model.owner}/${name || model.name}.mtl`;
-        const { error: uploadError } = await supabase.storage.from('models').upload(mtlFileName, mtlFile.buffer, {
+        const { error } = await supabase.storage.from('models').upload(mtlFileName, mtlFile.buffer, {
           contentType: 'text/plain',
           upsert: true,
         });
-        if (uploadError) throw uploadError;
+        if (error) throw error;
       }
     }
 
@@ -591,7 +599,32 @@ app.delete('/api/admin/models/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Contact Form
+app.post('/api/contact', async (req, res) => {
+  const { name, email, message } = req.body;
+  console.log('Received contact form submission:', { name, email, message });
+  res.status(200).json({ message: 'Form submission received!' });
+});
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+// Server Cleanup
+process.on('SIGINT', () => {
+  console.log('Received SIGINT. Closing server...');
+  server.close(() => {
+    console.log('Server closed.');
+    mongoose.connection.close(false, () => {
+      console.log('MongoDB connection closed.');
+      process.exit(0);
+    });
+  });
+});
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM. Closing server...');
+  server.close(() => {
+    console.log('Server closed.');
+    mongoose.connection.close(false, () => {
+      console.log('MongoDB connection closed.');
+      process.exit(0);
+    });
+  });
 });
